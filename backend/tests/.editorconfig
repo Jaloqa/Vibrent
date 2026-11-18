@@ -1,0 +1,3 @@
+[*.cs]
+# Test names follow Should_<Outcome>_When_<Condition>
+dotnet_diagnostic.CA1707.severity = none
