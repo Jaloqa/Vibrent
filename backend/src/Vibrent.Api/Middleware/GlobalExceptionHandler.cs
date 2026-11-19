@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Vibrent.Api.Middleware;
 
@@ -22,6 +24,16 @@ internal sealed partial class GlobalExceptionHandler(
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "One or more validation errors occurred.",
+            },
+            DbUpdateConcurrencyException => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "The resource was changed by another request. Reload it and try again.",
+            },
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } } => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "The resource already exists.",
             },
             _ => new ProblemDetails
             {
