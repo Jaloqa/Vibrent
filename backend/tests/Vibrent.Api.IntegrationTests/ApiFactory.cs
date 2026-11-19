@@ -25,5 +25,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseSetting("ConnectionStrings:Default", _database.GetConnectionString());
         builder.UseSetting("Database:MigrateOnStartup", "true");
+        builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-with-32-plus-chars");
     }
 }
