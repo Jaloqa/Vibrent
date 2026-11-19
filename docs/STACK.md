@@ -34,8 +34,9 @@ Agreed stack for Vibrent (frontend, backend, infrastructure), aligned with the p
 | PostgreSQL | Relational database |
 | EF Core + Npgsql | ORM for CRUD and schema migrations |
 | Database transactions | Consistency of `AcceptedCount` vs `Capacity` when accepting or withdrawing applications concurrently |
-| ASP.NET Core Identity + JWT | Email + password authentication, password hashing, JWT tokens |
-| RBAC | Role-based access control: User, Organizer, Admin (one account can be both participant and organizer) |
+| ASP.NET Core Identity `PasswordHasher` + JWT | Email + password authentication; only the Identity password hasher is used, users live in the domain `User` entity; JWT tokens issued by the API |
+| RBAC | Role-based access control: User, Admin. Organizer is not a role: any user who owns an event organizes it |
+| Optimistic concurrency (`xmin`) | Protects `AcceptedCount` and application status against concurrent updates; conflicts return 409 |
 | FluentValidation | Server-side validation rules in separate classes, run in a MediatR pipeline behavior |
 | Pagination | Offset or cursor-based pagination for list endpoints |
 | Serilog | Structured logging |
