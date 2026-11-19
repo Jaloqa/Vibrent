@@ -1,5 +1,6 @@
 using Vibrent.Api.Features.Admin.BlockUser;
 using Vibrent.Api.Features.Admin.ListUsers;
+using Vibrent.Api.Features.Admin.UnblockUser;
 
 namespace Vibrent.Api.Features.Admin;
 
@@ -11,6 +12,7 @@ internal static class AdminEndpoints
 
         group.MapListUsers();
         group.MapBlockUser();
+        group.MapUnblockUser();
 
         return routes;
     }
