@@ -82,11 +82,17 @@ public sealed class Event
         string address,
         double latitude,
         double longitude,
-        string? imageUrl)
+        string? imageUrl,
+        DateTimeOffset now)
     {
         if (Status == EventStatus.Cancelled)
         {
             return EventErrors.Cancelled;
+        }
+
+        if (IsFinished(now))
+        {
+            return EventErrors.Finished;
         }
 
         CategoryId = categoryId;

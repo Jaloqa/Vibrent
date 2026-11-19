@@ -1,4 +1,5 @@
 using Shouldly;
+using Vibrent.Domain.Common;
 using Vibrent.Domain.Events;
 using Vibrent.Domain.Swipes;
 using static Vibrent.Api.UnitTests.Domain.DomainFactory;
@@ -82,9 +83,34 @@ public sealed class EventTests
         var @event = CreateEvent();
         @event.Cancel();
 
-        var result = @event.UpdateDetails(@event.CategoryId, "New title", @event.Description, @event.StartsAt, @event.Address, @event.Latitude, @event.Longitude, @event.ImageUrl);
+        var result = UpdateTitle(@event, "New title", Now);
 
         result.Error.ShouldBe(EventErrors.Cancelled);
         @event.Title.ShouldNotBe("New title");
     }
+
+    [Fact]
+    public void Should_ReturnFinished_When_UpdatingEventThatAlreadyStarted()
+    {
+        var @event = CreateEvent(startsAt: Now.AddHours(-1));
+
+        var result = UpdateTitle(@event, "New title", Now);
+
+        result.Error.ShouldBe(EventErrors.Finished);
+        @event.Title.ShouldNotBe("New title");
+    }
+
+    [Fact]
+    public void Should_UpdateDetails_When_EventIsUpcoming()
+    {
+        var @event = CreateEvent();
+
+        var result = UpdateTitle(@event, "New title", Now);
+
+        result.IsSuccess.ShouldBeTrue();
+        @event.Title.ShouldBe("New title");
+    }
+
+    private static Result UpdateTitle(Event @event, string title, DateTimeOffset now) =>
+        @event.UpdateDetails(@event.CategoryId, title, @event.Description, @event.StartsAt, @event.Address, @event.Latitude, @event.Longitude, @event.ImageUrl, now);
 }
