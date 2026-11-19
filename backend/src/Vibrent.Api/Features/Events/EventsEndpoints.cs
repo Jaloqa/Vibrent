@@ -1,5 +1,6 @@
 using Vibrent.Api.Features.Events.CreateEvent;
 using Vibrent.Api.Features.Events.GetEvent;
+using Vibrent.Api.Features.Events.UpdateEvent;
 
 namespace Vibrent.Api.Features.Events;
 
@@ -11,6 +12,7 @@ internal static class EventsEndpoints
 
         group.MapCreateEvent();
         group.MapGetEvent();
+        group.MapUpdateEvent();
 
         return routes;
     }
