@@ -3,6 +3,7 @@ using Vibrent.Api.Extensions;
 using Vibrent.Api.Features.Auth;
 using Vibrent.Api.Features.Categories;
 using Vibrent.Api.Features.Events;
+using Vibrent.Api.Features.Feed;
 using Vibrent.Api.Features.Swipes;
 using Vibrent.Api.Features.Users;
 using Vibrent.Infrastructure;
@@ -31,5 +32,6 @@ app.MapUsersEndpoints();
 app.MapCategoriesEndpoints();
 app.MapEventsEndpoints();
 app.MapSwipesEndpoints();
+app.MapFeedEndpoints();
 
 await app.RunAsync();
