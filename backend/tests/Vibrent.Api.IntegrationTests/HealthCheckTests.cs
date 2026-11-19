@@ -3,7 +3,8 @@ using Shouldly;
 
 namespace Vibrent.Api.IntegrationTests;
 
-public sealed class HealthCheckTests(ApiFactory factory) : IClassFixture<ApiFactory>
+[Collection(ApiFixtureDefinition.Name)]
+public sealed class HealthCheckTests(ApiFactory factory)
 {
     [Fact]
     public async Task Should_ReturnHealthy_When_DatabaseIsReachable()
