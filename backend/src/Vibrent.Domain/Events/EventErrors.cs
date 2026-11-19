@@ -4,6 +4,15 @@ namespace Vibrent.Domain.Events;
 
 public static class EventErrors
 {
+    public static readonly Error NotFound =
+        Error.NotFound("Event.NotFound", "The event was not found.");
+
+    public static readonly Error NotOrganizer =
+        Error.Forbidden("Event.NotOrganizer", "Only the organizer can manage this event.");
+
+    public static readonly Error HasApplications =
+        Error.Conflict("Event.HasApplications", "An event with applications cannot be deleted. Cancel it instead.");
+
     public static readonly Error NoFreeSeats =
         Error.Conflict("Event.NoFreeSeats", "The event has no free seats left.");
 
