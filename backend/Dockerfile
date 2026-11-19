@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY global.json Directory.Build.props Directory.Packages.props ./
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/Vibrent.Api/Vibrent.Api.csproj src/Vibrent.Api/
 COPY src/Vibrent.Domain/Vibrent.Domain.csproj src/Vibrent.Domain/
 COPY src/Vibrent.Infrastructure/Vibrent.Infrastructure.csproj src/Vibrent.Infrastructure/
