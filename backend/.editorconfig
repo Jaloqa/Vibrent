@@ -1,0 +1,6 @@
+[*.cs]
+# C#-only codebase; domain names such as Event and Error are VB keywords but not C# ones
+dotnet_diagnostic.CA1716.severity = none
+
+[src/Vibrent.Infrastructure/Persistence/Migrations/*.cs]
+generated_code = true
