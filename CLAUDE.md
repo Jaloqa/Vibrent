@@ -26,7 +26,7 @@ The agreed stack is in [docs/STACK.md](docs/STACK.md). Do not introduce librarie
 - PostgreSQL with EF Core (Npgsql) for data access and migrations
 - FluentValidation
 - OpenAPI contract in `contracts/openapi.yaml`, Swagger UI for exploration
-- ASP.NET Core Identity + JWT, RBAC through authorization policies
+- Users are the domain `User` entity; ASP.NET Core Identity is used only for `PasswordHasher`; JWT issued by the API; RBAC through authorization policies
 - RustFS (S3 API) for avatars and event images
 - Serilog for structured logging
 - Testing: xUnit, Shouldly, Moq, Bogus, Testcontainers for PostgreSQL, Playwright for end-to-end, JUnit XML reports
@@ -37,15 +37,16 @@ The agreed stack is in [docs/STACK.md](docs/STACK.md). Do not introduce librarie
 
 These come from the domain description and must hold regardless of how a feature is implemented.
 
-- One account can act as both participant and organizer. Admin is a separate role.
+- Roles are `User` and `Admin`. Organizer is not a role: any user who owns an event is its organizer, so one account can be both participant and organizer.
 - A swipe is either `like` or `dislike`. Only a `like` creates an application, with status `pending`.
 - The pair (UserId, EventId) is unique for swipes and for applications. No double applications.
 - An organizer cannot apply to their own event.
 - Application statuses: `pending`, `accepted`, `rejected`, `withdrawn`. Both pending and accepted applications can be withdrawn; withdrawing an accepted one frees a seat.
-- `AcceptedCount` never exceeds `Capacity`. Accepting when no seats are left is rejected. Changes to `AcceptedCount` run in a transaction with concurrency protection, because two organizers' actions or a withdraw and an accept can race.
-- Event statuses: active, finished, cancelled. Prefer cancelling over deleting when an event already has applications or accepted participants.
+- `AcceptedCount` never exceeds `Capacity`. Accepting when no seats are left is rejected. `Event` and `EventApplication` use PostgreSQL `xmin` as an optimistic concurrency token, so two concurrent accepts of the last seat cannot both succeed; the loser gets 409. A database CHECK constraint backs the rule up.
+- Event statuses: active, finished, cancelled. Only `Active` and `Cancelled` are stored; finished is computed from `StartsAt`. Prefer cancelling over deleting; the database blocks deleting an event that has applications.
 - The feed skips events the user already swiped, the user's own events and events with no free seats.
 - The application (Polish: "zgłoszenie") entity is named `EventApplication` in code to avoid clashing with framework names. The table stays `Applications`.
+- Entities guard their own invariants: state changes go through methods (`Event.RecordSwipe`, `EventApplication.Accept`, `Reject`, `Withdraw`, `Event.ChangeCapacity`, `Cancel`) that return a `Result`. Setters are private. Handlers load entities, call these methods and save; ownership checks (is this the organizer, is this the applicant) stay in handlers.
 
 Features marked as extensions in the domain description (map, Super Like, notifications, chat, ratings, payments) are out of MVP scope. Do not build them unless asked.
 
@@ -75,15 +76,16 @@ backend/
       Behaviors/                 # Mediator pipeline: validation, logging, transaction
       Extensions/                # service and endpoint registration (AddX / MapX)
       Configuration/             # options classes and their validators
-      Common/                    # shared API contracts: Result, pagination, ProblemDetails mapping
-    Vibrent.Domain/              # entities, value objects, enums, no dependencies
+      Common/                    # shared API contracts: pagination, Result to ProblemDetails mapping
+    Vibrent.Domain/              # entities, enums, errors, no dependencies
+      Common/                    # Result, Error, ErrorType
+      Users/ Categories/ Events/ Swipes/ Applications/
     Vibrent.Infrastructure/      # everything that talks to the outside world
       Persistence/
         AppDbContext.cs
         Configurations/          # IEntityTypeConfiguration<T>: unique indexes, check constraints
-        Migrations/
-        Interceptors/            # auditing
-        Seed/                    # categories and sample events
+        Migrations/              # generated, excluded from analyzers
+        AppDbContextDesignTimeFactory.cs
       Authentication/
       Storage/                   # RustFS client
       DependencyInjection.cs     # AddInfrastructure extension
@@ -109,7 +111,9 @@ Rules:
 - Every query that returns a collection is paginated (offset by default, cursor-based for large or infinite lists such as the feed).
 - Every endpoint declares its authorization policy explicitly.
 - Pass `CancellationToken` through every async call.
-- Database changes go through EF Core migrations. Never edit an applied migration.
+- Database changes go through EF Core migrations. Never edit an applied migration. Seed data (categories) lives in `HasData` in the entity configuration.
+- Migrations are applied on startup when `Database:MigrateOnStartup` is `true` (set in Docker Compose and integration tests).
+- Entities get their timestamps from the `now` argument passed by the handler (use `TimeProvider`), not from `DateTime.UtcNow` inside the domain.
 
 ## Frontend
 
@@ -147,10 +151,11 @@ cp .env.example .env
 docker compose up -d --build
 
 cd backend
+dotnet tool restore
 dotnet build
 dotnet test --logger junit
 dotnet run --project src/Vibrent.Api
-dotnet ef migrations add <Name> --project src/Vibrent.Infrastructure --startup-project src/Vibrent.Api
+dotnet ef migrations add <Name> --project src/Vibrent.Infrastructure --startup-project src/Vibrent.Api --output-dir Persistence/Migrations
 dotnet ef database update --project src/Vibrent.Infrastructure --startup-project src/Vibrent.Api
 ```
 
@@ -158,6 +163,8 @@ Frontend and e2e commands will be added once their tooling is set up.
 
 ## Testing
 
+- Domain rules are unit-tested in `Vibrent.Api.UnitTests/Domain`; database constraints and concurrency in `Vibrent.Api.IntegrationTests/Persistence`.
+- Integration test classes share one PostgreSQL container through `[Collection(ApiFixtureDefinition.Name)]`. Create fresh data per test instead of relying on database state.
 - Unit-test validators and non-trivial handler logic. Mock dependencies with Moq, build test data with Bogus, assert with Shouldly.
 - Integration-test each endpoint against a real PostgreSQL started by Testcontainers, using `WebApplicationFactory`. Do not use the EF in-memory provider.
 - Every domain rule above has at least one test, including concurrent accepts against the last free seat.
