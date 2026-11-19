@@ -1,6 +1,7 @@
 using Serilog;
 using Vibrent.Api.Extensions;
 using Vibrent.Api.Features.Auth;
+using Vibrent.Api.Features.Users;
 using Vibrent.Infrastructure;
 using Vibrent.Infrastructure.Persistence;
 
@@ -23,5 +24,6 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 app.UseApi();
 
 app.MapAuthEndpoints();
+app.MapUsersEndpoints();
 
 await app.RunAsync();
