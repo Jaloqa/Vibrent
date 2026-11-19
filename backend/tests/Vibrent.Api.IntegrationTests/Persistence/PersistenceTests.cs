@@ -101,7 +101,8 @@ public sealed class PersistenceTests(ApiFactory factory)
 
     private static User AddUser(AppDbContext dbContext)
     {
-        var user = User.Register($"{Guid.NewGuid():N}@vibrent.test", "hash", "Test user", Now);
+        var user = User.Register($"{Guid.NewGuid():N}@vibrent.test", "Test user", Now);
+        user.ChangePasswordHash("hash");
         dbContext.Users.Add(user);
         return user;
     }
