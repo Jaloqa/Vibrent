@@ -1,5 +1,6 @@
 using Serilog;
 using Vibrent.Api.Extensions;
+using Vibrent.Api.Features.Applications;
 using Vibrent.Api.Features.Auth;
 using Vibrent.Api.Features.Categories;
 using Vibrent.Api.Features.Events;
@@ -33,5 +34,6 @@ app.MapCategoriesEndpoints();
 app.MapEventsEndpoints();
 app.MapSwipesEndpoints();
 app.MapFeedEndpoints();
+app.MapApplicationsEndpoints();
 
 await app.RunAsync();
