@@ -1,6 +1,9 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Vibrent.Api.Behaviors;
+using Vibrent.Api.Common;
 using Vibrent.Api.Middleware;
+using Vibrent.Domain.Users;
 using Vibrent.Infrastructure.Persistence;
 
 namespace Vibrent.Api.Extensions;
@@ -21,6 +24,11 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(AuthorizationPolicies.User, policy => policy.RequireAuthenticatedUser())
+            .AddPolicy(AuthorizationPolicies.Admin, policy => policy.RequireAuthenticatedUser().RequireRole(nameof(UserRole.Admin)))
+            .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
         return services;
     }
