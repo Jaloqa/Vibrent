@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Vibrent.Api.Features.Events;
+using Vibrent.Api.Features.Feed.GetFeed;
 using Vibrent.Domain.Applications;
 using Vibrent.Domain.Events;
 using Vibrent.Domain.Swipes;
@@ -32,6 +33,13 @@ internal static class EventsTestData
         using var response = await client.PostAsJsonAsync("/events", request ?? ValidRequest(), ApiClientExtensions.JsonOptions);
         response.EnsureSuccessStatusCode();
         return await response.ReadAsAsync<EventResponse>();
+    }
+
+    public static async Task<FeedPageResponse> GetFeedAsync(this HttpClient client, string url)
+    {
+        using var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsAsync<FeedPageResponse>();
     }
 
     public static async Task<Guid> SeedApplicationAsync(
