@@ -23,6 +23,28 @@ public sealed class EventTests
     }
 
     [Fact]
+    public void Should_ReturnNoFreeSeats_When_UserLikesFullEvent()
+    {
+        var @event = CreateEvent(capacity: 1);
+        CreatePendingApplication(@event).Accept(@event, Now);
+
+        var result = @event.RecordSwipe(Guid.CreateVersion7(), SwipeDecision.Like, Now);
+
+        result.Error.ShouldBe(EventErrors.NoFreeSeats);
+    }
+
+    [Fact]
+    public void Should_CreateSwipe_When_UserDislikesFullEvent()
+    {
+        var @event = CreateEvent(capacity: 1);
+        CreatePendingApplication(@event).Accept(@event, Now);
+
+        var result = @event.RecordSwipe(Guid.CreateVersion7(), SwipeDecision.Dislike, Now);
+
+        result.IsSuccess.ShouldBeTrue();
+    }
+
+    [Fact]
     public void Should_ReturnOwnEvent_When_OrganizerSwipesOwnEvent()
     {
         var @event = CreateEvent();

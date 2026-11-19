@@ -47,8 +47,9 @@ public sealed class EventApplicationTests
     public void Should_ReturnNoFreeSeats_When_AcceptingWithEventFull()
     {
         var @event = CreateEvent(capacity: 1);
-        CreatePendingApplication(@event).Accept(@event, Now);
+        var first = CreatePendingApplication(@event);
         var application = CreatePendingApplication(@event);
+        first.Accept(@event, Now);
 
         var result = application.Accept(@event, Now);
 

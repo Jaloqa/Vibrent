@@ -155,6 +155,11 @@ public sealed class Event
             return EventErrors.Finished;
         }
 
+        if (decision == SwipeDecision.Like && FreeSeats == 0)
+        {
+            return EventErrors.NoFreeSeats;
+        }
+
         return Swipe.Create(userId, Id, decision, now);
     }
 
