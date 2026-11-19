@@ -1,6 +1,7 @@
 using Serilog;
 using Vibrent.Api.Extensions;
 using Vibrent.Infrastructure;
+using Vibrent.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,11 @@ builder.Services.AddInfrastructure();
 
 var app = builder.Build();
 
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    await app.Services.MigrateDatabaseAsync();
+}
+
 app.UseApi();
 
-app.Run();
+await app.RunAsync();
