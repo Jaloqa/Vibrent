@@ -10,14 +10,14 @@ public static class WebApplicationExtensions
         app.UseStatusCodePages();
         app.UseSerilogRequestLogging();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
-
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi().AllowAnonymous();
             app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Vibrent API v1"));
+            app.MapOpenApi().AllowAnonymous();
         }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapHealthChecks("/health").AllowAnonymous();
 
