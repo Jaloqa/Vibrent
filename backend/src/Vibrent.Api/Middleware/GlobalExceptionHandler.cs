@@ -25,6 +25,11 @@ internal sealed partial class GlobalExceptionHandler(
                 Status = StatusCodes.Status400BadRequest,
                 Title = "One or more validation errors occurred.",
             },
+            BadHttpRequestException badRequest => new ProblemDetails
+            {
+                Status = badRequest.StatusCode,
+                Title = "The request could not be read.",
+            },
             DbUpdateConcurrencyException => new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
