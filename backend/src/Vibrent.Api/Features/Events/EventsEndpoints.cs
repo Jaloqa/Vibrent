@@ -1,5 +1,6 @@
 using Vibrent.Api.Features.Events.CancelEvent;
 using Vibrent.Api.Features.Events.CreateEvent;
+using Vibrent.Api.Features.Events.DeleteEvent;
 using Vibrent.Api.Features.Events.GetEvent;
 using Vibrent.Api.Features.Events.UpdateEvent;
 
@@ -15,6 +16,7 @@ internal static class EventsEndpoints
         group.MapGetEvent();
         group.MapUpdateEvent();
         group.MapCancelEvent();
+        group.MapDeleteEvent();
 
         return routes;
     }
