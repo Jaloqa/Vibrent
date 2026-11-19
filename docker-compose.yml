@@ -23,6 +23,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       Database__MigrateOnStartup: "true"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
       ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-vibrent};Username=${POSTGRES_USER:-vibrent};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
       - "${API_PORT:-8080}:8080"
