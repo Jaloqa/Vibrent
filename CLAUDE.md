@@ -111,7 +111,7 @@ Rules:
 - Feature-specific errors live next to the feature (`Features/Auth/AuthErrors.cs`); errors shared between features live in the domain (`UserErrors`, `EventErrors`, `ApplicationErrors`).
 - Queries use `AsNoTracking` and project to response DTOs with `Select`. Never expose entities from the API.
 - Every query that returns a collection is paginated (offset by default, cursor-based for large or infinite lists such as the feed). Offset queries implement `IPagedQuery`, call `this.ValidatePaging()` in the validator and return `PagedResponse<T>` through `ToPagedResponseAsync`. Bounded reference data such as categories is the only exception.
-- Every endpoint declares its authorization policy explicitly: `.RequireAuthorization(AuthorizationPolicies.User)`, `.RequireAuthorization(AuthorizationPolicies.Admin)` or `.AllowAnonymous()`. The fallback policy requires an authenticated user, so a forgotten declaration fails closed.
+- Every endpoint declares its authorization policy explicitly: `.RequireAuthorization(AuthorizationPolicies.User)`, `.RequireAuthorization(AuthorizationPolicies.Admin)` or `.AllowAnonymous()`. The fallback policy requires an authenticated user, so a forgotten declaration fails closed. The `User` and `Admin` policies also require an active account (`ActiveUserRequirement` checks the database), so blocking an account invalidates its tokens immediately.
 - The signed-in user's id comes from the token: take `ClaimsPrincipal` in the endpoint, call `principal.GetUserId()` and pass it into the command. Never accept a user id from the request body for "me" operations.
 - JWT settings live in the `Jwt` section (`Issuer`, `Audience`, `ExpiryMinutes` in `appsettings.json`; `SigningKey` from user secrets locally and `JWT_SIGNING_KEY` in Docker Compose). Options are validated on startup. There is no refresh token; signing out means the client drops the token.
 - Pass `CancellationToken` through every async call.
@@ -161,6 +161,12 @@ dotnet test --logger junit
 dotnet run --project src/Vibrent.Api
 dotnet ef migrations add <Name> --project src/Vibrent.Infrastructure --startup-project src/Vibrent.Api --output-dir Persistence/Migrations
 dotnet ef database update --project src/Vibrent.Infrastructure --startup-project src/Vibrent.Api
+```
+
+There is no admin sign-up. Grant the role in the database, then sign in again:
+
+```
+docker compose exec db psql -U vibrent -d vibrent -c "UPDATE \"Users\" SET \"Role\" = 'Admin' WHERE \"Email\" = '<email>';"
 ```
 
 Frontend and e2e commands will be added once their tooling is set up.
