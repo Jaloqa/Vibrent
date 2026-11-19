@@ -28,9 +28,15 @@ public static class ServiceCollectionExtensions
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
+        services.AddScoped<IAuthorizationHandler, ActiveUserHandler>();
         services.AddAuthorizationBuilder()
-            .AddPolicy(AuthorizationPolicies.User, policy => policy.RequireAuthenticatedUser())
-            .AddPolicy(AuthorizationPolicies.Admin, policy => policy.RequireAuthenticatedUser().RequireRole(nameof(UserRole.Admin)))
+            .AddPolicy(AuthorizationPolicies.User, policy => policy
+                .RequireAuthenticatedUser()
+                .AddRequirements(new ActiveUserRequirement()))
+            .AddPolicy(AuthorizationPolicies.Admin, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireRole(nameof(UserRole.Admin))
+                .AddRequirements(new ActiveUserRequirement()))
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
         return services;
