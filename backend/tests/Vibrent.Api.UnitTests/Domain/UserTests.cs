@@ -15,4 +15,27 @@ public sealed class UserTests
         user.Role.ShouldBe(UserRole.User);
         user.IsBlocked.ShouldBeFalse();
     }
+
+    [Fact]
+    public void Should_BlockUser_When_UserIsNotAdmin()
+    {
+        var user = User.Register("jan@example.com", "Jan", Now);
+
+        var result = user.Block();
+
+        result.IsSuccess.ShouldBeTrue();
+        user.IsBlocked.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Should_ReturnCannotBlockAdmin_When_UserIsAdmin()
+    {
+        var admin = User.Register("admin@example.com", "Admin", Now);
+        admin.PromoteToAdmin();
+
+        var result = admin.Block();
+
+        result.Error.ShouldBe(UserErrors.CannotBlockAdmin);
+        admin.IsBlocked.ShouldBeFalse();
+    }
 }

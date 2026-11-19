@@ -1,3 +1,5 @@
+using Vibrent.Domain.Common;
+
 namespace Vibrent.Domain.Users;
 
 public sealed class User
@@ -48,7 +50,19 @@ public sealed class User
 
     public void ChangePasswordHash(string passwordHash) => PasswordHash = passwordHash;
 
-    public void Block() => IsBlocked = true;
+    public void PromoteToAdmin() => Role = UserRole.Admin;
+
+    public Result Block()
+    {
+        if (Role == UserRole.Admin)
+        {
+            return UserErrors.CannotBlockAdmin;
+        }
+
+        IsBlocked = true;
+
+        return Result.Success();
+    }
 
     public void Unblock() => IsBlocked = false;
 }
