@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Vibrent.Api.Behaviors;
@@ -13,6 +14,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApi(this IServiceCollection services)
     {
         services.AddOpenApi();
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false)));
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
