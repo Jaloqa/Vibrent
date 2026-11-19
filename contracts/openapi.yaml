@@ -16,6 +16,8 @@ security:
 tags:
   - name: Auth
   - name: Users
+  - name: Categories
+  - name: Events
 
 paths:
   /auth/register:
@@ -139,6 +141,172 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /categories:
+    get:
+      tags: [Categories]
+      operationId: listCategories
+      summary: List event categories
+      description: Bounded reference data, returned without pagination.
+      responses:
+        '200':
+          description: Categories ordered by name
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events:
+    post:
+      tags: [Events]
+      operationId: createEvent
+      summary: Create an event organized by the signed-in user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '201':
+          description: Event created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid data or `Category.NotFound`
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/mine:
+    get:
+      tags: [Events]
+      operationId: listMyEvents
+      summary: List events organized by the signed-in user
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Events ordered from the latest start date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyEventPage'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [Events]
+      operationId: getEvent
+      summary: Get event details
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+    put:
+      tags: [Events]
+      operationId: updateEvent
+      summary: Update an event (organizer only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid data or `Category.NotFound`
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotOrganizer'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+        '409':
+          description: '`Event.Cancelled`, `Event.Finished`, `Event.CapacityBelowAccepted` or a concurrent change'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      tags: [Events]
+      operationId: deleteEvent
+      summary: Delete an event without applications (organizer only)
+      description: Events that already have applications cannot be deleted; cancel them instead.
+      responses:
+        '204':
+          description: Event deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotOrganizer'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+        '409':
+          description: '`Event.HasApplications`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /events/{eventId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Events]
+      operationId: cancelEvent
+      summary: Cancel an event (organizer only)
+      responses:
+        '204':
+          description: Event cancelled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotOrganizer'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+        '409':
+          description: '`Event.Cancelled`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   securitySchemes:
     bearer:
@@ -155,6 +323,42 @@ components:
             $ref: '#/components/schemas/ValidationProblem'
     Unauthorized:
       description: Missing or invalid access token
+    NotOrganizer:
+      description: '`Event.NotOrganizer`'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    EventNotFound:
+      description: '`Event.NotFound`'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
 
   schemas:
     RegisterRequest:
@@ -239,6 +443,141 @@ components:
         role:
           type: string
           enum: [User, Admin]
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    EventRequest:
+      type: object
+      required: [categoryId, title, description, startsAt, address, latitude, longitude, capacity]
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 2000
+        startsAt:
+          type: string
+          format: date-time
+          description: Must be in the future
+        address:
+          type: string
+          maxLength: 200
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        capacity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: On update it cannot be lower than the number of accepted participants
+
+    EventState:
+      type: string
+      enum: [Active, Finished, Cancelled]
+      description: Finished is computed from `startsAt`
+
+    Event:
+      type: object
+      required: [id, organizerId, organizerName, categoryId, categoryName, title, description, startsAt, address, latitude, longitude, capacity, acceptedCount, freeSeats, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizerId:
+          type: string
+          format: uuid
+        organizerName:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        categoryName:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        capacity:
+          type: integer
+        acceptedCount:
+          type: integer
+        freeSeats:
+          type: integer
+        imageUrl:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/EventState'
+        createdAt:
+          type: string
+          format: date-time
+
+    MyEvent:
+      type: object
+      required: [id, title, categoryName, startsAt, address, capacity, acceptedCount, freeSeats, pendingApplications, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        categoryName:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        address:
+          type: string
+        capacity:
+          type: integer
+        acceptedCount:
+          type: integer
+        freeSeats:
+          type: integer
+        pendingApplications:
+          type: integer
+        status:
+          $ref: '#/components/schemas/EventState'
+
+    MyEventPage:
+      type: object
+      required: [items, page, pageSize, totalCount]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyEvent'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
 
     Problem:
       type: object
