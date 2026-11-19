@@ -21,6 +21,11 @@ tags:
   - name: Feed
   - name: Swipes
   - name: Applications
+  - name: Admin
+    description: >
+      Requires the Admin role. Grant it with
+      `UPDATE "Users" SET "Role" = 'Admin' WHERE "Email" = '<email>';`
+      and sign in again to get a token with the new role.
 
 paths:
   /auth/register:
@@ -423,6 +428,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  /admin/users:
+    get:
+      tags: [Admin]
+      operationId: listUsers
+      summary: List and search user accounts
+      parameters:
+        - name: search
+          in: query
+          description: Part of the email or display name, case-insensitive
+          schema:
+            type: string
+            maxLength: 100
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Users from the newest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users/{userId}/block:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Admin]
+      operationId: blockUser
+      summary: Block an account; its tokens stop working immediately
+      responses:
+        '204':
+          description: User blocked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          description: '`User.CannotBlockAdmin`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /admin/users/{userId}/unblock:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Admin]
+      operationId: unblockUser
+      summary: Unblock an account
+      responses:
+        '204':
+          description: User unblocked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+
+  /admin/events/{eventId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Admin]
+      operationId: moderateCancelEvent
+      summary: Cancel any event as a moderation action
+      responses:
+        '204':
+          description: Event cancelled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+        '409':
+          description: '`Event.Cancelled`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   /events/{eventId}:
     parameters:
       - $ref: '#/components/parameters/EventId'
@@ -536,6 +632,14 @@ components:
             $ref: '#/components/schemas/ValidationProblem'
     Unauthorized:
       description: Missing or invalid access token
+    Forbidden:
+      description: The account is blocked or lacks the required role
+    UserNotFound:
+      description: '`User.NotFound`'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     NotOrganizer:
       description: '`Event.NotOrganizer`'
       content:
@@ -569,6 +673,13 @@ components:
       in: query
       schema:
         $ref: '#/components/schemas/ApplicationStatus'
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     EventId:
       name: eventId
       in: path
@@ -999,6 +1110,41 @@ components:
           type: string
           format: date-time
         eventFreeSeats:
+          type: integer
+
+    AdminUser:
+      type: object
+      required: [id, email, displayName, role, isBlocked, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [User, Admin]
+        isBlocked:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminUserPage:
+      type: object
+      required: [items, page, pageSize, totalCount]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
           type: integer
 
     Problem:
