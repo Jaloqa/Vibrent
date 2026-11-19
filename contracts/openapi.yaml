@@ -18,6 +18,8 @@ tags:
   - name: Users
   - name: Categories
   - name: Events
+  - name: Feed
+  - name: Swipes
 
 paths:
   /auth/register:
@@ -209,6 +211,103 @@ paths:
           $ref: '#/components/responses/ValidationProblem'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /events/feed:
+    get:
+      tags: [Feed]
+      operationId: getFeed
+      summary: Get event cards to swipe
+      description: >
+        Upcoming active events with free seats, ordered by start date. Skips events the user
+        already swiped and the user's own events. Location filter needs `lat`, `lng` and
+        `radiusKm` together.
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - name: lng
+          in: query
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+        - name: radiusKm
+          in: query
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 200
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: cursor
+          in: query
+          description: '`nextCursor` from the previous page'
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Feed page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedPage'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}/swipe:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Swipes]
+      operationId: swipeEvent
+      summary: Like or dislike an event card
+      description: A like creates a pending application.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwipeRequest'
+      responses:
+        '200':
+          description: Swipe recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Swipe'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: '`Event.OwnEvent`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+        '409':
+          description: '`Swipe.AlreadySwiped`, `Event.NoFreeSeats`, `Event.Cancelled` or `Event.Finished`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 
   /events/{eventId}:
     parameters:
@@ -578,6 +677,77 @@ components:
           type: integer
         totalCount:
           type: integer
+
+    FeedCard:
+      type: object
+      required: [id, title, description, categoryName, organizerName, startsAt, address, latitude, longitude, capacity, freeSeats]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        categoryName:
+          type: string
+        organizerName:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        capacity:
+          type: integer
+        freeSeats:
+          type: integer
+        imageUrl:
+          type: [string, 'null']
+        distanceKm:
+          type: [number, 'null']
+          description: Present when the location filter is used
+
+    FeedPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedCard'
+        nextCursor:
+          type: [string, 'null']
+          description: Null on the last page
+
+    SwipeDecision:
+      type: string
+      enum: [Like, Dislike]
+
+    SwipeRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          $ref: '#/components/schemas/SwipeDecision'
+
+    Swipe:
+      type: object
+      required: [eventId, decision]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        decision:
+          $ref: '#/components/schemas/SwipeDecision'
+        applicationId:
+          type: [string, 'null']
+          format: uuid
+          description: Id of the pending application created by a like
 
     Problem:
       type: object
