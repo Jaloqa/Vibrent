@@ -105,11 +105,12 @@ Rules:
 - Endpoints are thin: map the request to a command or query, send it through `IMediator`, map the result to an HTTP response.
 - Each feature exposes a `Map<Feature>Endpoints(this IEndpointRouteBuilder)` extension and is registered in `Program.cs`.
 - Endpoint routes and payloads follow `contracts/openapi.yaml`. Change the contract first, agree it with the frontend, then implement.
+- Enums travel as strings with their C# names (`Like`, `Pending`, `Cancelled`); integer values are rejected. The event state in responses (`Active`, `Finished`, `Cancelled`) comes from `EventStateResolver`.
 - Validation runs in a Mediator pipeline behavior using FluentValidation, never inside handlers.
 - Errors are returned as RFC 9457 `ProblemDetails`. Use a result type for expected failures (no free seats, duplicate application, forbidden action) and exceptions only for unexpected ones. Endpoints turn a failed `Result` into a response with `error.ToProblem()`, which sets the status from `ErrorType` and adds the error `code` (for example `Auth.EmailTaken`) for the frontend.
 - Feature-specific errors live next to the feature (`Features/Auth/AuthErrors.cs`); errors shared between features live in the domain (`UserErrors`, `EventErrors`, `ApplicationErrors`).
 - Queries use `AsNoTracking` and project to response DTOs with `Select`. Never expose entities from the API.
-- Every query that returns a collection is paginated (offset by default, cursor-based for large or infinite lists such as the feed).
+- Every query that returns a collection is paginated (offset by default, cursor-based for large or infinite lists such as the feed). Offset queries implement `IPagedQuery`, call `this.ValidatePaging()` in the validator and return `PagedResponse<T>` through `ToPagedResponseAsync`. Bounded reference data such as categories is the only exception.
 - Every endpoint declares its authorization policy explicitly: `.RequireAuthorization(AuthorizationPolicies.User)`, `.RequireAuthorization(AuthorizationPolicies.Admin)` or `.AllowAnonymous()`. The fallback policy requires an authenticated user, so a forgotten declaration fails closed.
 - The signed-in user's id comes from the token: take `ClaimsPrincipal` in the endpoint, call `principal.GetUserId()` and pass it into the command. Never accept a user id from the request body for "me" operations.
 - JWT settings live in the `Jwt` section (`Issuer`, `Audience`, `ExpiryMinutes` in `appsettings.json`; `SigningKey` from user secrets locally and `JWT_SIGNING_KEY` in Docker Compose). Options are validated on startup. There is no refresh token; signing out means the client drops the token.
