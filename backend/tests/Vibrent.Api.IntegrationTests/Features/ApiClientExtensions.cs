@@ -1,14 +1,21 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Shouldly;
 using Vibrent.Api.Features.Auth;
+using Vibrent.Api.Features.Users;
 
 namespace Vibrent.Api.IntegrationTests.Features;
 
 internal static class ApiClientExtensions
 {
     public const string DefaultPassword = "Sup3r-secret";
+
+    public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     public static string UniqueEmail() => $"{Guid.NewGuid():N}@vibrent.test";
 
@@ -30,6 +37,19 @@ internal static class ApiClientExtensions
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         return client;
+    }
+
+    public static async Task<Guid> GetMyIdAsync(this HttpClient client)
+    {
+        var profile = await client.GetFromJsonAsync<ProfileResponse>("/users/me");
+        return profile.ShouldNotBeNull().Id;
+    }
+
+    public static async Task<T> ReadAsAsync<T>(this HttpResponseMessage response)
+        where T : class
+    {
+        var body = await response.Content.ReadFromJsonAsync<T>(JsonOptions);
+        return body.ShouldNotBeNull();
     }
 
     public static async Task<string?> ReadProblemCodeAsync(this HttpResponseMessage response)
