@@ -2,6 +2,7 @@ using Serilog;
 using Vibrent.Api.Extensions;
 using Vibrent.Api.Features.Auth;
 using Vibrent.Api.Features.Categories;
+using Vibrent.Api.Features.Events;
 using Vibrent.Api.Features.Users;
 using Vibrent.Infrastructure;
 using Vibrent.Infrastructure.Persistence;
@@ -27,5 +28,6 @@ app.UseApi();
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapCategoriesEndpoints();
+app.MapEventsEndpoints();
 
 await app.RunAsync();
