@@ -9,7 +9,7 @@ public sealed class UserTests
     [Fact]
     public void Should_NormalizeEmailAndAssignUserRole_When_Registering()
     {
-        var user = User.Register("  Jan.Kowalski@Example.COM ", "hash", "Jan", Now);
+        var user = User.Register("  Jan.Kowalski@Example.COM ", "Jan", Now);
 
         user.Email.ShouldBe("jan.kowalski@example.com");
         user.Role.ShouldBe(UserRole.User);

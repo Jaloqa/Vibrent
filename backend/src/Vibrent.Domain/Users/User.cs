@@ -26,11 +26,10 @@ public sealed class User
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static User Register(string email, string passwordHash, string displayName, DateTimeOffset now) => new()
+    public static User Register(string email, string displayName, DateTimeOffset now) => new()
     {
         Id = Guid.CreateVersion7(now),
         Email = NormalizeEmail(email),
-        PasswordHash = passwordHash,
         DisplayName = displayName,
         Role = UserRole.User,
         CreatedAt = now,
