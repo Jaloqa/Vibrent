@@ -15,6 +15,9 @@ internal static class ApiClientExtensions
     public static Task<HttpResponseMessage> RegisterAsync(this HttpClient client, string email, string password = DefaultPassword) =>
         client.PostAsJsonAsync("/auth/register", new { email, password, displayName = "Test user" });
 
+    public static Task<HttpResponseMessage> LoginAsync(this HttpClient client, string email, string password) =>
+        client.PostAsJsonAsync("/auth/login", new { email, password });
+
     public static async Task<string> RegisterAndGetTokenAsync(this HttpClient client, string? email = null)
     {
         using var response = await client.RegisterAsync(email ?? UniqueEmail());
