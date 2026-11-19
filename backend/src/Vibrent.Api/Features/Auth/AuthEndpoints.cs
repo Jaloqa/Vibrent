@@ -1,3 +1,4 @@
+using Vibrent.Api.Features.Auth.ChangePassword;
 using Vibrent.Api.Features.Auth.Login;
 using Vibrent.Api.Features.Auth.Register;
 
@@ -11,6 +12,7 @@ internal static class AuthEndpoints
 
         group.MapRegister();
         group.MapLogin();
+        group.MapChangePassword();
 
         return routes;
     }

@@ -12,4 +12,7 @@ internal static class AuthErrors
 
     public static readonly Error UserBlocked =
         Error.Forbidden("Auth.UserBlocked", "This account is blocked.");
+
+    public static readonly Error InvalidCurrentPassword =
+        Error.Validation("Auth.InvalidCurrentPassword", "The current password is incorrect.");
 }
