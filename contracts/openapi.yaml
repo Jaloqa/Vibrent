@@ -20,6 +20,7 @@ tags:
   - name: Events
   - name: Feed
   - name: Swipes
+  - name: Applications
 
 paths:
   /auth/register:
@@ -309,6 +310,119 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  /events/{eventId}/applications:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [Applications]
+      operationId: listEventApplications
+      summary: List applications to an event (organizer only)
+      parameters:
+        - $ref: '#/components/parameters/ApplicationStatusFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Applications from the oldest, with applicant profiles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventApplicationPage'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotOrganizer'
+        '404':
+          $ref: '#/components/responses/EventNotFound'
+
+  /applications/mine:
+    get:
+      tags: [Applications]
+      operationId: listMyApplications
+      summary: List the signed-in user's applications
+      parameters:
+        - $ref: '#/components/parameters/ApplicationStatusFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Applications from the newest, with event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyApplicationPage'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /applications/{applicationId}:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    patch:
+      tags: [Applications]
+      operationId: decideApplication
+      summary: Accept or reject a pending application (organizer only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationDecisionRequest'
+      responses:
+        '200':
+          description: Decision saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDecision'
+        '400':
+          $ref: '#/components/responses/ValidationProblem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotOrganizer'
+        '404':
+          $ref: '#/components/responses/ApplicationNotFound'
+        '409':
+          description: >
+            `Application.NotPending`, `Event.NoFreeSeats`, `Event.Cancelled`, or a concurrent
+            change (for example another accept took the last seat first)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /applications/{applicationId}/withdraw:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    patch:
+      tags: [Applications]
+      operationId: withdrawApplication
+      summary: Withdraw the signed-in user's pending or accepted application
+      description: Withdrawing an accepted application frees a seat.
+      responses:
+        '204':
+          description: Application withdrawn
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: '`Application.NotApplicant`'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          $ref: '#/components/responses/ApplicationNotFound'
+        '409':
+          description: '`Application.CannotWithdraw` or a concurrent change'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   /events/{eventId}:
     parameters:
       - $ref: '#/components/parameters/EventId'
@@ -435,7 +549,26 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
 
+    ApplicationNotFound:
+      description: '`Application.NotFound`'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
   parameters:
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ApplicationStatusFilter:
+      name: status
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApplicationStatus'
     EventId:
       name: eventId
       in: path
@@ -748,6 +881,125 @@ components:
           type: [string, 'null']
           format: uuid
           description: Id of the pending application created by a like
+
+    ApplicationStatus:
+      type: string
+      enum: [Pending, Accepted, Rejected, Withdrawn]
+
+    Applicant:
+      type: object
+      required: [id, displayName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        bio:
+          type: [string, 'null']
+        avatarUrl:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+
+    EventApplication:
+      type: object
+      required: [id, status, createdAt, applicant]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        createdAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: [string, 'null']
+          format: date-time
+        applicant:
+          $ref: '#/components/schemas/Applicant'
+
+    EventApplicationPage:
+      type: object
+      required: [items, page, pageSize, totalCount]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventApplication'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+
+    MyApplication:
+      type: object
+      required: [id, status, createdAt, eventId, eventTitle, eventStartsAt, eventAddress, eventStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        createdAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: [string, 'null']
+          format: date-time
+        eventId:
+          type: string
+          format: uuid
+        eventTitle:
+          type: string
+        eventStartsAt:
+          type: string
+          format: date-time
+        eventAddress:
+          type: string
+        eventStatus:
+          $ref: '#/components/schemas/EventState'
+
+    MyApplicationPage:
+      type: object
+      required: [items, page, pageSize, totalCount]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyApplication'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+
+    ApplicationDecisionRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [Accepted, Rejected]
+
+    ApplicationDecision:
+      type: object
+      required: [id, status, decidedAt, eventFreeSeats]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        decidedAt:
+          type: string
+          format: date-time
+        eventFreeSeats:
+          type: integer
 
     Problem:
       type: object
