@@ -121,7 +121,7 @@ Rules:
 
 ## Frontend
 
-- React, shared by the whole frontend team. Details (build tool, TypeScript) are TBD in [docs/STACK.md](docs/STACK.md).
+- React, Vite and TypeScript. Details are in [docs/STACK.md](docs/STACK.md).
 - Organised by feature (auth, profile, feed, events, applications, organizer, admin), mirroring the backend features.
 - API types come from `contracts/openapi.yaml`. Do not hand-write request or response types that the contract already defines.
 - Mobile-first and responsive. Swipe gestures always have a button alternative for accessibility.
@@ -169,7 +169,14 @@ There is no admin sign-up. Grant the role in the database, then sign in again:
 docker compose exec db psql -U vibrent -d vibrent -c "UPDATE \"Users\" SET \"Role\" = 'Admin' WHERE \"Email\" = '<email>';"
 ```
 
-Frontend and e2e commands will be added once their tooling is set up.
+```
+cd frontend
+npm install
+npm run dev
+npm run build
+```
+
+End-to-end commands will be added once Playwright is set up.
 
 ## Testing
 

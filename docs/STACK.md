@@ -17,10 +17,11 @@ Agreed stack for Vibrent (frontend, backend, infrastructure), aligned with the p
 | Technology | Purpose |
 |---|---|
 | React | Web frontend framework shared by the whole team |
+| Vite | Build tool and dev server |
+| TypeScript | Static typing; API types will be generated from the OpenAPI contract |
+| Tailwind CSS | Utility styling used by the UI prototype |
 | REST API client | Communication with the backend, JWT attached to requests, API error handling |
 | Responsive, mobile-first UI | Works on phones and desktop; swipe gestures with button fallback for accessibility |
-| Vite (TBD) | Build tool and dev server |
-| TypeScript (TBD) | Static typing, types generated from the OpenAPI contract |
 | Leaflet + OpenStreetMap (TBD) | Interactive event map (extension, stage 7) |
 
 ## Backend
