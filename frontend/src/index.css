@@ -1,0 +1,213 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap&subset=latin-ext");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  /* Marka: „Vibrent coral” — jeden charakterystyczny kolor */
+  --color-brand-50: #fff4ef;
+  --color-brand-100: #ffe6db;
+  --color-brand-200: #ffc9b3;
+  --color-brand-300: #ffa07e;
+  --color-brand-400: #ff7a4d;
+  --color-brand-500: #f2582a;
+  --color-brand-600: #d23e17; /* przyciski z białym tekstem — 4.7:1 */
+  --color-brand-700: #ad3110;
+  --color-brand-800: #85270f;
+
+  --color-ink-950: #121218;
+  --color-ink-900: #1c1c24;
+  --color-ink-800: #2a2a34;
+  --color-ink-700: #3d3d4a;
+  --color-ink-600: #55556a; /* tekst drugorzędny — 7:1 na jasnym tle */
+  --color-ink-500: #6b6b80;
+  --color-ink-300: #c9c8d3;
+  --color-ink-200: #e4e2ea;
+  --color-ink-100: #efedf2;
+  --color-paper: #faf7f3;
+  --color-paper-2: #f3eee8;
+
+  --shadow-card: 0 1px 2px rgb(18 18 24 / 0.06), 0 12px 32px -12px rgb(18 18 24 / 0.22);
+  --shadow-float: 0 20px 50px -18px rgb(18 18 24 / 0.38);
+
+  --animate-pop: pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-fade-up: fade-up 0.45s ease-out both;
+  --animate-pulse-ring: pulse-ring 2.4s ease-out infinite;
+  --animate-float-a: float-a 6s ease-in-out infinite;
+  --animate-float-b: float-b 7s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-sheet-up: sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  --animate-dash: dash 1.2s linear infinite;
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes fade-up {
+    0% {
+      transform: translateY(12px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
+  @keyframes float-a {
+    0%,
+    100% {
+      transform: rotate(-7deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-5deg) translateY(-10px);
+    }
+  }
+  @keyframes float-b {
+    0%,
+    100% {
+      transform: rotate(6deg) translateY(0);
+    }
+    50% {
+      transform: rotate(8deg) translateY(-8px);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes sheet-up {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Skala interfejsu: telefon zostaje w 16px, a na większych ekranach cały UI
+     (tekst, odstępy, przyciski, karty, ikony) rośnie proporcjonalnie, bo wymiary są w rem.
+     Breakpointy w media queries liczą się od domyślnych 16px przeglądarki, więc się nie przesuwają. */
+  @media (min-width: 768px) {
+    html {
+      font-size: 17px;
+    }
+  }
+  @media (min-width: 1280px) {
+    html {
+      font-size: 18px;
+    }
+  }
+  @media (min-width: 1400px) {
+    html {
+      font-size: 19px;
+    }
+  }
+  @media (min-width: 1680px) {
+    html {
+      font-size: 20px;
+    }
+  }
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink-950);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-ink-100) 25%,
+    var(--color-paper-2) 50%,
+    var(--color-ink-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Widok mobilny i tablet: bez widocznych pasków przewijania, jak w aplikacjach natywnych.
+   Przewijanie (dotyk, kółko, klawiatura) działa bez zmian. */
+@media (max-width: 1023px) {
+  html,
+  body,
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
